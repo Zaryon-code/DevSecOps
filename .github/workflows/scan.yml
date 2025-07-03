@@ -7,8 +7,7 @@ on:
 
 jobs:
 
-  sonarqube:
-    name: SonarQube
+  Sonarqube:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,6 +17,11 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: app/src
+          args: >
+            -Dsonar.organization=zaryon-code
+            -Dsonar.projectKey=Zaryon-code_DevSecOps
       - name: Upload Test results
         uses: actions/upload-artifact@master
         with:
@@ -40,7 +44,7 @@ jobs:
           vuln-type: 'os,library'
       
   Build_and_Deploy_Qa:
-    needs: [Build_and_Scan]
+    needs: [Sonarqube, Build_and_Scan]
     runs-on: self-hosted
     steps:
       - name: Checkout code

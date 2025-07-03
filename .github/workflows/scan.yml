@@ -8,7 +8,6 @@ on:
 jobs:
 
   Build_and_Scan:
-    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -30,9 +29,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Build an image from Dockerfile
-        run: docker build -t dast-test:latest .
+        run: docker build -t devsecops:latest .
       - name: Deploy Qa
-        run: docker run -d --name dast-test --net zapnet -p 8089:80 dast-test:latest
+        run: docker run -d --name devsecops --net zapnet -p 8089:3000 devsecops:latest
 
   OwaspZap_Scan:
     needs: [Build_and_Deploy_Qa]

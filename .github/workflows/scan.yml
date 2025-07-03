@@ -4,20 +4,66 @@ on:
     branches:
       - main
   pull_request:
+
 jobs:
-  build:
+
+  Build_and_Scan:
     name: Build
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Build an image from Dockerfile
-        run: docker build -t devsecops:${{ github.sha }} .
+        run: docker build -t devsecops:latest .
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: 'devsecops:${{ github.sha }}'
+          image-ref: 'devsecops:latest'
           format: 'table'
           ignore-unfixed: true
           vuln-type: 'os,library'
-  
+      
+  Build_and_Deploy_Qa:
+    needs: [Build_and_Scan]
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build an image from Dockerfile
+        run: docker build -t dast-test:latest .
+      - name: Deploy Qa
+        run: docker run -d --name dast-test --net zapnet -p 8089:80 dast-test:latest
+
+  OwaspZap_Scan:
+    needs: [Build_and_Deploy_Qa]
+    runs-on: self-hosted
+    name: Scan the webapplication
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Pull de Imagen Owasp Zap
+      run: docker pull ghcr.io/zaproxy/zaproxy:stable
+    - name: Get HyperIP
+      id: get_ip
+      run: |
+        $ip = (Get-NetIPAddress -InterfaceAlias "vEthernet (WSL (Hyper-V firewall))" -AddressFamily IPv4).IPAddress
+        Write-Host "Found ip: $IP"
+        echo "ip_address=$ip" >> $env:GITHUB_OUTPUT
+    - name: Run scan on target
+      run: docker run --net zapnet --name owasp-zap -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -s -I -t http://${{ steps.get_ip.outputs.ip_address }}:8089
+
+  Kill_and_Remove:
+    needs: [OwaspZap_Scan]
+    runs-on: self-hosted
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Cleanup Kill dast-test
+      run: docker kill dast-test
+    - name: Cleanup Remove dast-test
+      run: docker rm dast-test
+    - name: Cleanup Remove owasp-zap
+      run: docker rm owasp-zap
+
+
+

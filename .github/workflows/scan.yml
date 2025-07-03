@@ -57,10 +57,10 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    - name: Cleanup Kill dast-test
-      run: docker kill dast-test
-    - name: Cleanup Remove dast-test
-      run: docker rm dast-test
+    - name: Cleanup Kill devsecops
+      run: docker kill devsecops
+    - name: Cleanup Remove devsecops
+      run: docker rm devsecops
     - name: Cleanup Remove owasp-zap
       run: docker rm owasp-zap
 

@@ -7,7 +7,28 @@ on:
 
 jobs:
 
-  Sonarqube:
+  SCA_depchecktest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      #- name: Build project with Maven
+      #  run: mvn clean install
+      - name: Depcheck
+        uses: dependency-check/Dependency-Check_Action@main
+        id: Depcheck
+        with:
+          project: "DevSecOps"
+          path: "."
+          format: "HTML"
+      - name: Upload Test results
+        uses: actions/upload-artifact@master
+        with:
+           name: Depcheck report
+           path: ${{github.workspace}}/reports
+
+  SAST_Sonarqube:
+    needs: [SCA_depchecktest]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,14 +42,9 @@ jobs:
           args: >
             -Dsonar.organization=zaryon-code
             -Dsonar.projectKey=Zaryon-code_DevSecOps
-      - name: Upload Test results
-        uses: actions/upload-artifact@master
-        with:
-           name: SAST report
-           path: ${{github.workspace}}/reports
 
-  Build_and_Scan:
-    needs: [Sonarqube]
+  Container_Scan_with_Trivy:
+    needs: [SAST_Sonarqube]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -44,7 +60,7 @@ jobs:
           vuln-type: 'os,library'
       
   Build_and_Deploy_Qa:
-    needs: [Build_and_Scan]
+    needs: [Container_Scan_with_Trivy]
     runs-on: self-hosted
     steps:
       - name: Checkout code

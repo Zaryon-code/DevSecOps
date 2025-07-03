@@ -6,29 +6,8 @@ on:
   pull_request:
 
 jobs:
-
-  SCA_depchecktest:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      #- name: Build project with Maven
-      #  run: mvn clean install
-      - name: Depcheck
-        uses: dependency-check/Dependency-Check_Action@main
-        id: Depcheck
-        with:
-          project: "DevSecOps"
-          path: "."
-          format: "HTML"
-      - name: Upload Test results
-        uses: actions/upload-artifact@master
-        with:
-           name: Depcheck report
-           path: ${{github.workspace}}/reports
-
+  
   SAST_Sonarqube:
-    needs: [SCA_depchecktest]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,8 +22,25 @@ jobs:
             -Dsonar.organization=zaryon-code
             -Dsonar.projectKey=Zaryon-code_DevSecOps
 
+  SCA_depchecktest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Depcheck
+        uses: dependency-check/Dependency-Check_Action@main
+        id: Depcheck
+        with:
+          project: "DevSecOps"
+          path: "."
+          format: "HTML"
+      - name: Upload Test results
+        uses: actions/upload-artifact@master
+        with:
+           name: Depcheck report
+           path: ${{github.workspace}}/reports
+
   Container_Scan_with_Trivy:
-    needs: [SAST_Sonarqube]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

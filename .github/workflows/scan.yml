@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  
+
   SAST_Sonarqube:
     runs-on: ubuntu-latest
     steps:
@@ -56,7 +56,7 @@ jobs:
           vuln-type: 'os,library'
       
   Build_and_Deploy_Qa:
-    needs: [Container_Scan_with_Trivy]
+    needs: [SAST_Sonarqube, SCA_depchecktest, Container_Scan_with_Trivy]
     runs-on: self-hosted
     steps:
       - name: Checkout code

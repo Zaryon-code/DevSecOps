@@ -18,7 +18,6 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          projectBaseDir: app/src
           args: >
             -Dsonar.organization=zaryon-code
             -Dsonar.projectKey=Zaryon-code_DevSecOps
@@ -29,6 +28,7 @@ jobs:
            path: ${{github.workspace}}/reports
 
   Build_and_Scan:
+    needs: [Sonarqube]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -44,7 +44,7 @@ jobs:
           vuln-type: 'os,library'
       
   Build_and_Deploy_Qa:
-    needs: [Sonarqube, Build_and_Scan]
+    needs: [Build_and_Scan]
     runs-on: self-hosted
     steps:
       - name: Checkout code
